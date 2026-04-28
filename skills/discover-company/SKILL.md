@@ -12,7 +12,7 @@ Goal: surface **one** company that is genuinely worth the user's attention right
 Check what's already tracked so you don't repeat it:
 
 ```bash
-ls ~/knowledge/companies/ 2>/dev/null        # private company slugs
+ls ~/knowledge/private-companies/ 2>/dev/null  # private company slugs
 ls ~/knowledge/public-companies/ 2>/dev/null  # public company tickers
 ```
 

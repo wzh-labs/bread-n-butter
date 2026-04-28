@@ -19,10 +19,10 @@ Run these tasks on every invocation:
 1. **research-trending-github** — invoke in delta mode (it self-detects) with `window: daily`.
    - Capture: brief path written, NEW / RISING / SUSTAINED / FELL OFF counts, top-3 NEW slugs.
 
-2. **research-private-company** — refresh every subdirectory under `~/knowledge/companies/` whose `brief.md` exists. Invoke each slug in delta mode (it self-detects). Run all slugs concurrently (up to 5 at a time).
+2. **research-private-company** — refresh every subdirectory under `~/knowledge/private-companies/` whose `brief.md` exists. Invoke each slug in delta mode (it self-detects). Run all slugs concurrently (up to 5 at a time).
    - Per-slug capture: `material-changes` (changelog entry written) | `no-changes` | `error: <reason>`.
    - A company with no changes contributes a one-liner; a company with changes contributes the changelog entry verbatim.
-   - If `~/knowledge/companies/` does not exist or has no `brief.md` files, skip silently (no error).
+   - If `~/knowledge/private-companies/` does not exist or has no `brief.md` files, skip silently (no error).
 
 3. **research-public-company** — refresh every subdirectory under `~/knowledge/public-companies/` whose `brief.md` exists. Invoke each ticker/slug in delta mode (it self-detects). Run all concurrently (up to 5 at a time).
    - Per-company capture: `material-changes` (changelog entry written) | `no-changes` | `error: <reason>`.
@@ -44,7 +44,7 @@ Root: `~/knowledge/daily-routine/`.
   runlog.jsonl                # one line per task execution: status, duration, brief link
 ```
 
-Per-task outputs live in their own skill's storage (e.g. `~/knowledge/github-trending/`, `~/knowledge/companies/<slug>/`). This skill does **not** duplicate them — it links to them.
+Per-task outputs live in their own skill's storage (e.g. `~/knowledge/github-trending/`, `~/knowledge/private-companies/<slug>/`). This skill does **not** duplicate them — it links to them.
 
 ## Idempotency
 
@@ -61,7 +61,7 @@ All tasks run in parallel — do not serialize.
 
 For every task, record one `runlog.jsonl` line:
 ```json
-{"date": "2026-04-26", "task_id": "companies-refresh", "started_at": "07:02:13Z", "duration_s": 38, "status": "ok", "summary": "3 companies, 1 with changes (cursor)", "artifacts": ["~/knowledge/companies/cursor/changelog.md"]}
+{"date": "2026-04-26", "task_id": "companies-refresh", "started_at": "07:02:13Z", "duration_s": 38, "status": "ok", "summary": "3 companies, 1 with changes (cursor)", "artifacts": ["~/knowledge/private-companies/cursor/changelog.md"]}
 ```
 
 ### 2. Aggregate

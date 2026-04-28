@@ -22,10 +22,10 @@ If the user didn't specify the angle, infer from context but don't block on it.
 
 ## Storage layout
 
-All findings live under `~/knowledge/companies/` (override with `$KNOWLEDGE_ROOT`). One directory per company:
+All findings live under `~/knowledge/private-companies/` (override with `$KNOWLEDGE_ROOT`). One directory per company:
 
 ```
-~/knowledge/companies/<slug>/
+~/knowledge/private-companies/<slug>/
   brief.md          # current canonical brief: YAML frontmatter + narrative
   changelog.md      # append-only delta log, newest on top
   snapshots/
@@ -75,7 +75,7 @@ Defaults for what counts as a change:
 Run from `$KNOWLEDGE_ROOT` (default `~/knowledge`):
 
 ```bash
-git add companies/<slug>/
+git add private-companies/<slug>/
 git commit -m "<message>"
 git push
 ```
@@ -85,7 +85,7 @@ Commit message format:
 - **Delta mode:** `research(<slug>): <YYYY-MM-DD> — <one-line delta summary>` (e.g. `research(cursor): 2026-05-10 — Series C $80M, CFO departed, headcount 240→310`)
 
 Rules:
-- **Stage explicitly** — `git add companies/<slug>/`. Never `git add -A` or `git add .` (other unrelated work may be in flight elsewhere in the repo).
+- **Stage explicitly** — `git add private-companies/<slug>/`. Never `git add -A` or `git add .` (other unrelated work may be in flight elsewhere in the repo).
 - **No commit on empty delta.** If the run produced no file changes, do not create a commit.
 - **One commit per company per run.** Don't bundle multiple companies in one commit.
 - **If `git push` fails** (no upstream, network, conflict), report the failure and stop. Do not force-push, do not rewrite history, do not bypass hooks. The local commit is still on disk; the user can resolve and push manually.
