@@ -13,7 +13,7 @@ for skill_dir in "$SKILLS_SRC"/*/; do
 
   if [[ -L "$target" ]]; then
     echo "update  $skill_name"
-    ln -sf "$skill_dir" "$target"
+    ln -sfn "$skill_dir" "$target"
   elif [[ -e "$target" ]]; then
     echo "skip    $skill_name (exists, not a symlink)"
   else
