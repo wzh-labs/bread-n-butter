@@ -26,16 +26,6 @@
 	<string>https://api.openai.com/v1/responses</string>
 	<key>AllowClipboardAccess</key>
 	<true/>
-	<key>AppleAntiAliasingThreshold</key>
-	<integer>1</integer>
-	<key>ApplePressAndHoldEnabled</key>
-	<false/>
-	<key>AppleScrollAnimationEnabled</key>
-	<integer>0</integer>
-	<key>AppleSmoothFixedFontsSizeThreshold</key>
-	<integer>1</integer>
-	<key>AppleWindowTabbingMode</key>
-	<string>manual</string>
 	<key>Default Bookmark Guid</key>
 	<string>E0A5C78D-417D-4AF7-94EF-D1F8AC367BB9</string>
 	<key>DeleteProfile_SilenceUntil</key>
@@ -56,6 +46,32 @@
 			<string>\n</string>
 			<key>Version</key>
 			<integer>1</integer>
+		</dict>
+		<key>0xf702-0x280000-0x7b</key>
+		<dict>
+			<key>Action</key>
+			<integer>10</integer>
+			<key>Apply Mode</key>
+			<integer>0</integer>
+			<key>Escaping</key>
+			<integer>2</integer>
+			<key>Text</key>
+			<string>b</string>
+			<key>Version</key>
+			<integer>2</integer>
+		</dict>
+		<key>0xf703-0x280000-0x7c</key>
+		<dict>
+			<key>Action</key>
+			<integer>10</integer>
+			<key>Apply Mode</key>
+			<integer>0</integer>
+			<key>Escaping</key>
+			<integer>2</integer>
+			<key>Text</key>
+			<string>f</string>
+			<key>Version</key>
+			<integer>2</integer>
 		</dict>
 	</dict>
 	<key>HapticFeedbackForEsc</key>
@@ -321,26 +337,7 @@
 				<string>telnet</string>
 			</array>
 			<key>Keyboard Map</key>
-			<dict>
-				<key>0xf702-0x280000-0x7b</key>
-				<dict>
-					<key>Action</key>
-					<integer>10</integer>
-					<key>Label</key>
-					<string></string>
-					<key>Text</key>
-					<string>b</string>
-				</dict>
-				<key>0xf703-0x280000-0x7c</key>
-				<dict>
-					<key>Action</key>
-					<integer>10</integer>
-					<key>Label</key>
-					<string></string>
-					<key>Text</key>
-					<string>f</string>
-				</dict>
-			</dict>
+			<dict/>
 			<key>Minimum Contrast</key>
 			<real>0.0</real>
 			<key>Mouse Reporting</key>
