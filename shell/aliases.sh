@@ -3,6 +3,8 @@
 alias ga="git add"
 alias gas="gh auth switch"
 alias gb="git branch"
+alias gbd="git branch -d"
+alias gbdr="git push origin --delete"
 alias gc="git commit"
 alias gcm="git commit -m"
 alias gco="git checkout"
