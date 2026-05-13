@@ -23,3 +23,18 @@ alias gs="git status"
 alias gst="git stash"
 alias gsw="git switch"
 alias m="gco main && gp"
+
+gsm() {
+  if [ -z "$1" ]; then
+    echo "Usage: gsm <branch-name>"
+    return 1
+  fi
+  local branch="$1"
+  git checkout main && git pull || return 1
+  git checkout "$branch" && git pull origin main --no-edit || return 1
+  git diff HEAD main
+  if [ -z "$(git diff HEAD main)" ]; then
+    git checkout main
+    git branch -D "$branch"
+  fi
+}
