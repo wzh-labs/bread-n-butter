@@ -1,11 +1,11 @@
 ---
 name: full-repo-review
-description: Review the repository at the current working directory end-to-end and produce a structured, actionable assessment in chat. Covers architecture, code quality, security, dependencies, tests, CI/CD, and documentation — grounded in the actual code, not vibes. Persists a per-repo profile under `~/knowledge/repos/<slug>/` so re-runs detect repo drift (what changed in the code) and ecosystem drift (what changed in the wider world — deprecations, CVEs, official successors — even if the repo didn't). Takes no arguments and always operates on pwd. Output stays in chat (plus the knowledge-base writes); never opens PRs, posts issues, or writes files into the repo under review. Use when the user asks to "review this repo", "audit this codebase", "do a full repo review", "/full-repo-review", or otherwise wants a holistic read of the repo they're currently in. Distinct from `review-pr` (single PR diff) and the built-in `/review` (local uncommitted changes only).
+description: Review the repository at the current working directory end-to-end, produce a structured assessment, then build an incremental improvement plan ordered by importance and execute it one PR at a time. Covers architecture, code quality, security, dependencies, tests, CI/CD, and documentation — grounded in the actual code, not vibes. Persists a per-repo profile under `~/knowledge/repos/<slug>/` so re-runs detect repo drift (what changed in the code) and ecosystem drift (what changed in the wider world — deprecations, CVEs, official successors — even if the repo didn't). Takes no arguments and always operates on pwd. After the review, generates an ordered task list and walks through tasks one by one, opening a focused PR for each (gated on explicit user confirmation before the first write). Use when the user asks to "review this repo", "audit this codebase", "do a full repo review", "/full-repo-review", or otherwise wants a holistic read of the repo they're currently in. Distinct from `review-pr` (single PR diff) and the built-in `/review` (local uncommitted changes only).
 ---
 
 # Full Repo Review
 
-Goal: read the whole repository at `pwd` — not just a diff — and produce a review the user can act on. What's solid, what's weak, what's risky, where to look first. Grounded in the actual code, manifests, and history. Re-runs surface what changed in the repo *and* what changed in the wider ecosystem (deprecations, CVEs, official successors) since the last review. Chat-only output for the review; persistent state is written to `~/knowledge/repos/<slug>/` — never into the repo under review.
+Goal: read the whole repository at `pwd` — not just a diff — and produce a review the user can act on. What's solid, what's weak, what's risky, where to look first. Grounded in the actual code, manifests, and history. Re-runs surface what changed in the repo *and* what changed in the wider ecosystem (deprecations, CVEs, official successors) since the last review. Then convert the findings into an ordered improvement plan and ship them as a sequence of focused PRs — one task per PR, in priority order, gated on user confirmation. The review itself is chat-only and read-only; persistent state lives under `~/knowledge/repos/<slug>/`. Code changes only happen during the execution phase (§11), and only after the user has approved the plan.
 
 ## Persistence
 
@@ -281,7 +281,99 @@ After printing the chat output, write to `~/knowledge/repos/<slug>/`:
    ```
 5. **`sources.jsonl`** — append one JSON line per URL hit during §7's ecosystem-drift research. Skip on first run (no §7).
 
-All writes go to `~/knowledge/repos/<slug>/`. Nothing is written into the repo under review.
+All writes go to `~/knowledge/repos/<slug>/`. Nothing is written into the repo under review during §1–§9.
+
+### 10. Build an incremental improvement plan
+
+After printing the review and persisting the profile, turn the findings into a concrete task list. Print it in chat under a `## Improvement plan` heading. Also save it to `~/knowledge/repos/<slug>/plan.md` so it survives across sessions.
+
+**What goes in:** every Blocker and Should-fix from §8, plus Nits that are cheap and worth doing. Skip "questions", "out of scope", and anything you flagged as speculative — the plan is for things you're confident are worth changing.
+
+**Ordering rules** (apply in this order — earlier rules outrank later ones):
+1. **Severity** — security/correctness blockers before should-fixes before nits.
+2. **Risk reduction** — issues that, left alone, will get worse (CVEs, EOL runtimes, growing dead code) before steady-state cleanups.
+3. **Dependencies** — if task B is much easier after task A lands (e.g. typecheck-on-CI before fixing type errors), A goes first.
+4. **Blast radius** — prefer foundational changes (lint config, CI gate) before broad sweeps that depend on the foundation.
+5. **Effort, tiebreaker only** — when two tasks are otherwise equal, smaller PRs first to build momentum and unblock review.
+
+Do NOT reorder by "what's easy to implement" — that produces a plan that ignores risk. Severity wins.
+
+**Each task entry** (numbered, in execution order):
+
+```
+### N. <title — imperative, PR-friendly, <60 chars>>
+
+- **Severity:** Blocker | Should-fix | Nit
+- **Scope:** <files/dirs touched, or "global config">
+- **Why:** <1 sentence — what breaks or degrades without this>
+- **Change:** <2–4 sentences — what the PR will actually do>
+- **Verification:** <how we'll know it worked — tests added, command output, type-check passes>
+- **Effort:** S (<1h) | M (a few hours) | L (half-day+)
+- **Depends on:** <task N> or —
+- **Source:** <link back to the §8 finding it came from — file:line>
+```
+
+Keep PR scope tight: one task = one PR. If a finding is too big for one PR (e.g. "rewrite auth"), break it into staged tasks (1: add new path behind flag, 2: migrate callers, 3: remove old path) and list them as separate entries with `Depends on:`.
+
+After printing the plan, **stop and ask the user**: "Plan looks like N tasks. Start with task 1, or skip ahead / drop / reorder anything first?" Do not start writing code yet — the plan is a checkpoint, not a green light.
+
+### 11. Execute tasks one PR at a time
+
+Once the user confirms the plan (or a subset / reordering), work through the list in order. **One task → one branch → one PR.** Never batch.
+
+**Pre-flight checks** (run once before starting the first task):
+
+- `git status` is clean. If not, stop and ask the user how to handle the dirty tree.
+- **Base branch is `main`.** Every PR opened by this skill targets `main` — no exceptions for stacked PRs, feature branches, or release branches without explicit user direction. Confirm `main` exists locally and on `origin` (`git show-ref --verify refs/heads/main` and `git ls-remote --heads origin main`). If the repo uses `master` or another name as its default, stop and ask the user how to proceed — do not silently substitute.
+- `git fetch origin main` and confirm local `main` is up-to-date with `origin/main`. If behind, fast-forward before branching.
+- Checkout `main` if you aren't already on it.
+- `gh auth status` succeeds (PRs need it). If not, stop — fall back to chat-only output and tell the user to authenticate.
+
+**For each task, in order:**
+
+1. **Restate the task** in one line in chat ("Task 3/8: add typecheck to CI"). This is the cue the user can interrupt before any write.
+2. **Branch from `main`.** Re-confirm you're on an up-to-date local `main` (`git fetch origin main && git checkout main && git pull --ff-only origin main`), then `git checkout -b <type>/<short-slug>`. `<type>` matches the change kind in conventions visible in `git log --oneline -50` (commonly `fix/`, `chore/`, `refactor/`, `feat/`, `security/`). Examples: `security/sanitize-redirect-target`, `chore/pin-node-version`. Keep slugs under ~40 chars. Never branch from another feature branch — every PR is rooted at `main`.
+3. **Make the change.** Stay strictly within the task's stated scope. If you discover the fix is bigger than scoped, stop, report what you found, and propose splitting — do not silently expand the PR.
+4. **Verify the change works.** Run the project's tests / typecheck / linter that actually exercise the change. If the task added a regression test, confirm it fails before the fix and passes after. If the repo has no test infra and verification isn't possible, say so explicitly in the PR body — do not claim "tested" when you didn't.
+5. **Commit.** Match the repo's existing commit-message style (look at `git log --oneline -30`). Default to Conventional Commits if the repo has no clear style. One commit per PR is preferred; squash locally if you needed exploratory commits.
+6. **Verify the PR contents before submitting.** Before pushing or calling `gh pr create`, audit exactly what the PR will contain by inspecting the diff against `main` — this is the maintainer's first impression and your last chance to catch unintended changes. Run:
+   - `git diff main...HEAD --stat` — every file in the PR; confirm each one belongs to the task.
+   - `git diff main...HEAD` — read the whole diff. Look for: changes outside the stated scope, leftover debug prints / `console.log` / `dbg!`, commented-out code, TODO markers added by you, secrets or local paths, large auto-formatter sweeps unrelated to the task, accidental whitespace-only churn across many files.
+   - `git log main..HEAD --oneline` — the commits the PR will contain match what you intended (no exploratory commits leaked through).
+   - `git status` — no stray uncommitted or untracked files that should have been included or `.gitignore`'d.
+
+   If anything looks off, fix it before pushing: `git restore --staged <file>` / `git restore <file>` for unintended changes, amend the commit to drop debug code, or split the PR if the scope ballooned. **Do not push and then fix in follow-up commits** — the human reviewer should see a clean PR, not a noisy history. State in chat what you verified ("Diff is 3 files, 47 lines, all under `src/auth/`. No debug code. ✓") before moving to step 7.
+7. **Push and open the PR** with `gh pr create --base main`. PR body template:
+
+   ```
+   ## Summary
+   <1–3 bullets — what changed and why, in the user's own words>
+
+   ## Why
+   From full-repo-review on <YYYY-MM-DD>: <severity> — <one-line finding from §8>.
+
+   ## Changes
+   - <file:line> — <what changed>
+
+   ## Verification
+   - [x] <command run and what it confirmed>
+   - [ ] <anything the reviewer still needs to check manually>
+
+   ## Related
+   Task <N> of <total> in the improvement plan (`~/knowledge/repos/<slug>/plan.md`).
+   ```
+
+   Set the PR title to the task title from §10. Always pass `--base main` explicitly — do not rely on the remote's default-base inference. Do NOT add `Co-Authored-By` or `Generated with Claude Code` lines unless the user has asked for them — match what the repo's existing PRs do.
+8. **Report back** in chat with the PR URL and a one-line status. Then stop and wait. Do not start the next task automatically — the user reviews, merges (or asks for revisions), and tells you to proceed.
+
+**When the user says "do them all" or "keep going without asking":** still pause briefly after each PR to print the URL, but proceed to the next task without waiting. Continue until: the plan is exhausted, a verification fails, a task expands beyond its scoped diff, the user interrupts, or `gh pr create` fails (rate limit, conflict, etc.). On any of those, stop and report.
+
+**Updating the plan as PRs land:** after each merged PR, append a line to `~/knowledge/repos/<slug>/plan.md` under that task: `- Shipped in #<PR>, merged <YYYY-MM-DD>.` If the work changed shape mid-flight (split into two PRs, dropped, deferred), note that on the task too. The plan file is the running record of the improvement effort across sessions.
+
+**Failure handling inside a task:**
+- Verification fails after the change → fix forward inside the same PR if obvious; otherwise revert local changes, mark the task as blocked in `plan.md`, and surface the blocker to the user before moving on.
+- `gh pr create` fails → print the error verbatim, leave the branch in place, do not retry blindly.
+- Conflict with main during the task → rebase if trivial; if not, stop and ask. Never `--force` push or `git reset --hard` without explicit user OK.
 
 ## Style
 
@@ -293,18 +385,36 @@ All writes go to `~/knowledge/repos/<slug>/`. Nothing is written into the repo u
 
 ## Output destination
 
-The chat output is the review. The **only** files this skill writes are under `~/knowledge/repos/<slug>/` (see §9). Never:
-- Run `gh issue create`, `gh pr create`, `gh pr comment`, or any other write command against the repo.
-- Write files into the repo under review — this skill is read-only on the target repo.
-- Push, branch, or commit anywhere.
+The skill has two distinct phases with different write rules.
 
-The user reads the review, decides what to act on, and posts/files anything themselves. If they explicitly ask you to open issues for the findings afterward, that's a separate request — confirm exactly what to file and where before running any write command.
+**Phases §1–§10 (review + plan) are read-only on the repo.** Writes during these phases go only to `~/knowledge/repos/<slug>/` (`brief.md`, `state.json`, `changelog.md`, `snapshots/`, `sources.jsonl`, `plan.md`). Do NOT during these phases:
+- Run `gh issue create`, `gh pr comment`, or any other write against issues/discussions.
+- Write files into the repo under review.
+- Branch, commit, or push.
+
+**Phase §11 (execution) writes to the repo and opens PRs**, but only after the user has explicitly confirmed the plan from §10. Allowed during execution:
+- Create branches off the default branch.
+- Edit/add/delete files for the scoped task.
+- Commit and push the task branch.
+- Run `gh pr create` for the task's PR.
+
+Still never, even in execution:
+- Push or force-push to the default branch.
+- Run `git reset --hard`, delete branches, or rewrite published history without explicit user OK.
+- Open more than one PR per task, or bundle multiple tasks into one PR.
+- Skip hooks (`--no-verify`) or bypass signing.
+- Run `gh issue create` or post comments on existing issues/PRs unless the user asks for it.
+
+If the user only wants the review (and not the plan/execution), they can stop after §9 — confirm with them at the §10 checkpoint. If they want issues filed instead of PRs, that's a separate ask — confirm exactly what to file before running any write.
 
 ## Failure modes
 
 - **`pwd` is not inside a git repo:** stop with a one-line note pointing them at `cd`.
-- **`gh` not authenticated or no GitHub remote:** proceed with local-only signal; skip issue/PR/CI sections and say so in the output. Do not fail.
+- **`gh` not authenticated or no GitHub remote:** review proceeds with local-only signal; skip issue/PR/CI sections and say so in the output. The plan (§10) can still be produced, but warn the user that §11 execution will be blocked until `gh` is authenticated or they switch to a manual workflow.
 - **Empty repo / no commits:** stop with a one-line note. Nothing to review.
-- **Monorepo with many independent packages:** ask the user whether to review the whole tree or scope to one package before diving in. (If they pick a package, prefix the slug with the package name so it gets its own profile.)
-- **Archived / read-only repo (per `gh repo view`):** review anyway, but note the archived state at the top.
+- **Monorepo with many independent packages:** ask the user whether to review the whole tree or scope to one package before diving in. (If they pick a package, prefix the slug with the package name so it gets its own profile.) PRs from §11 should also stay scoped to that package.
+- **Archived / read-only repo (per `gh repo view`):** review anyway, but note the archived state at the top. Skip §11 — opening PRs against an archived repo is a waste of time. Tell the user.
 - **`state.json` exists but is malformed:** treat as first run for drift purposes, but back up the broken file to `state.json.bak.<timestamp>` instead of overwriting it silently.
+- **Dirty working tree at start of §11:** stop and ask the user how to handle it (stash, commit, or abandon). Do not blindly stash — the dirty state may be in-progress work.
+- **No write access to the repo (fork required):** `gh pr create` will fail or ask to fork. Stop and confirm with the user whether to fork-and-PR or just produce patches. Do not auto-fork.
+- **Default branch is protected and direct push is required (unusual):** stop and ask — the standard PR flow assumes a branch + PR, not direct pushes.
