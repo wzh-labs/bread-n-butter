@@ -16,8 +16,9 @@ Every proposal must satisfy *all* of these. If you can't make a candidate satisf
 1. **AI-agent-driven.** The business only exists because LLM agents do the work. A version of the idea that pre-dates current-gen LLMs is disqualified. The agent is the labor, not a feature bolted onto a SaaS shell.
 2. **One-person operable.** A single founder can run it end-to-end — no ops team, no sales team, no human-in-the-loop labeling sweatshop. Customer support, ops, and delivery should fit within reasonable solo bandwidth (or themselves be agent-driven).
 3. **Orthogonal to existing moonshots.** Different problem, different audience, *and* different mechanism than every idea already in `~/knowledge/moonshots/ideas/`. "Same idea with a tweak" is not orthogonal. If the closest existing idea shares two of {problem, audience, mechanism}, pick a new candidate.
-4. **Has a plausible path to first revenue inside 90 days.** Either a clear pricing model (subscription, per-seat, per-action, % of value delivered) *or* a distribution channel concrete enough to test. Vapor like "we'll figure out monetization later" is disqualifying.
+4. **Has a plausible path to first revenue inside 90 days.** A clear pricing model (subscription, per-seat, per-action, % of value delivered) *and* a concrete first-customer path. Vapor like "we'll figure out monetization later" is disqualifying.
 5. **Defensible-enough.** Either a data moat, a distribution moat, a workflow moat (deep integration into a specific niche), or a quality moat (the agent does something competitors can't easily match). "It's a wrapper" with no moat is disqualifying — there are too many of those.
+6. **Has a concrete go-to-market path a solo founder can actually run.** A named channel (specific subreddit, Slack/Discord community, niche newsletter, vertical marketplace, conference, partner ecosystem, content-SEO niche, cold-outbound list the founder can build) plus a believable first-10-customer motion. "Go viral on Twitter" is not a GTM. If you can't name the channel and the motion, the candidate isn't ready.
 
 ## Phase 0 — Survey existing ideas
 
@@ -47,6 +48,7 @@ Per global CLAUDE.md: research first, verify against current docs. Training data
    - Forum threads where professionals complain about a specific repetitive task by name.
    - Existing competitors who are deliberately *too generic* — leaving a wedge for a sharper, niche-vertical alternative.
    - Distribution channels that recently opened (e.g. agentic marketplaces, MCP server directories, specific SaaS marketplaces, vertical communities).
+   - Concrete GTM patterns that worked for recent solo-AI founders — what channel they used, what the first-10-customer motion looked like, what failed.
 2. **Search in parallel.** Issue all `WebSearch` calls in a single batch. Then `WebFetch` the highest-signal pages (founder retrospectives, forum threads with concrete complaints, primary-source product launches). Skip SEO-bait listicles and "Top 50 AI business ideas" posts.
 3. **Generate 5–8 candidate ideas internally** from the research. For each, write a one-line tagline plus a one-sentence note on which existing moonshot it's closest to and why it's still orthogonal.
 4. **Filter against the hard constraints above.** Discard anything that fails any of the five. Discard anything where the closest existing moonshot shares ≥2 of {problem, audience, mechanism}.
@@ -79,6 +81,11 @@ Format the pitch exactly like this:
 **Audience:** <buyer role + rough population size with source>
 
 **Revenue model:** <pricing shape + a back-of-envelope first-year revenue scenario at modest scale>
+
+**Go-to-market:**
+- **First 10 customers:** <the specific named channel + the motion. e.g. "Cold-DM 200 plaintiff-side employment lawyers sourced from the AAJ member directory; offer 30 days free in exchange for a recorded feedback call." Concrete enough that the founder could start tomorrow.>
+- **Channel to 100 customers:** <the scalable channel that keeps working past founder-led sales. e.g. "Vertical-niche content SEO + a free agent-callable API tier that lawyers' assistants share internally." Name the channel; don't just say "content marketing.">
+- **Why this channel and not others:** <one sentence — what about the audience makes this channel work and others not>
 
 **Why now:** <2 bullets — what shifted recently that makes this newly buildable or newly valuable. Cite sources>
 
@@ -133,6 +140,17 @@ _idea-XXXX · Created <YYYY-MM-DD>_
 
 ## Revenue model
 <Pricing shape (subscription / per-seat / per-action / % of value). Back-of-envelope first-year revenue scenario at modest scale — explain the assumptions.>
+
+## Go-to-market
+**First 10 customers:** <Named channel + concrete motion. e.g. "Cold-email 200 plaintiff-side employment lawyers from the AAJ directory; offer 30 days free for a recorded feedback call." Specific enough to start tomorrow.>
+
+**Channel to 100 customers:** <The scalable channel that keeps working past founder-led sales. Name it; explain the motion in one sentence.>
+
+**Channel to 1,000 customers:** <The flywheel — partnership, integration, marketplace, content-SEO compounding, paid acquisition with a known CAC ceiling, or referral mechanic. One sentence.>
+
+**Why this channel:** <One sentence — what about the audience makes this channel work and others fail.>
+
+**Estimated CAC vs. LTV:** <Rough numbers with assumptions, or `(unknown — to validate with first 10)` if genuinely not pinnable yet.>
 
 ## Why now
 - <Recent capability or market shift #1, with source>
